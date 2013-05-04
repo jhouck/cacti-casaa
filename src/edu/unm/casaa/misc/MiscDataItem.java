@@ -128,6 +128,10 @@ public class MiscDataItem implements Utterance {
 		endTime		= null;
 	}
 
+	public void stripMiscCode() {
+		setMiscCode( MiscCode.INVALID_CODE );
+	}
+
 	/**
 	 * Returns the MISC code for this utterance.
 	 * Returned misc code will have value MiscCode.INVALID if value wasn't set.

@@ -83,6 +83,13 @@ public class UtteranceList {
 	}
 
 	/**
+	 * Get last utterance (coded or not), or null if list is empty.
+	 */
+	public Utterance last() {
+		return list.isEmpty() ? null : list.lastElement();
+	}
+
+	/**
 	 * Return index of last coded utterance, or -1 if none found.
 	 * @return index
 	 */

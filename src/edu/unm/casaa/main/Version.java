@@ -25,8 +25,8 @@ package edu.unm.casaa.main;
  */
 public class Version {
 	public static final int MAJOR 		= 0;
-	public static final int MINOR 		= 9;
-	public static final int REVISION 	= 7;
+	public static final int MINOR 		= 10;
+	public static final int REVISION 	= 0;
 
 	public static String versionString() {
 		return "" + MAJOR + "." + MINOR + "." + REVISION;

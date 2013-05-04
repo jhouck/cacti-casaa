@@ -84,9 +84,8 @@ public class PlayerView extends JFrame {
 	private static final int BUTTON_HEIGHT		= 25;
 	private JButton buttonPlay					= null;
 	private JButton buttonReplay				= null;
-	private JButton buttonUnparse				= null;
-	private JButton buttonUnparseAndReplay		= null;
 	private JButton buttonUncode				= null;
+	private JButton buttonUncodeAndReplay		= null;
 	private JButton buttonRewind5s				= null;
 	private JSlider sliderSeek					= null;
 	private JLabel labelPlayerStatus			= null;
@@ -97,9 +96,6 @@ public class PlayerView extends JFrame {
 	private JMenuItem menuItemLoadAudio			= null;	
     private JMenuItem menuItemOptions           = null;
 	private JMenuItem menuItemExit				= null;
-	private JMenu menuParse						= null;
-	private JMenuItem menuItemNewParse			= null;
-	private JMenuItem menuItemLoadParse			= null;
 	private JMenu menuCode						= null;
 	private JMenuItem menuItemNewCode			= null;
 	private JMenuItem menuItemLoadCode			= null;
@@ -200,43 +196,29 @@ public class PlayerView extends JFrame {
 	
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	/**
-	 * Returns the Player's Unparse Button
-	 * @return a JButton used to undo last parse, without affecting playback position.
-	 */
-	public JButton getButtonUnparse(){
-		if( buttonUnparse == null ){
-			buttonUnparse = newPlayerButton( "unparse", KeyStroke.getKeyStroke( KeyEvent.VK_N, 0 ) );
-		}
-		return buttonUnparse;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	/**
-	 * Returns the Player's UnparseAndReplay Button
-	 * @return a JButton used to undo last parse, and rewind playback position.
-	 */
-	public JButton getButtonUnparseAndReplay(){
-		if( buttonUnparseAndReplay == null ){
-			buttonUnparseAndReplay = newPlayerButton( "unparseAndReplay", KeyStroke.getKeyStroke( KeyEvent.VK_U, 0 ) );
-
-			// Button needs more space for label.
-			buttonUnparseAndReplay.setPreferredSize( new Dimension( (int) (BUTTON_WIDTH * 1.5), BUTTON_HEIGHT ) );
-		}
-		return buttonUnparseAndReplay;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	/**
 	 * Returns the Player's Uncode Button
-	 * @return a JButton used to undo last two codes and rewind playback position.
+	 * @return a JButton used to undo last parse, without affecting playback position.
 	 */
 	public JButton getButtonUncode(){
 		if( buttonUncode == null ){
-			// NOTE: Shares "u" key binding with unparseAndReplay, but only one of these two
-			// buttons will be visible at any given time.
-			buttonUncode = newPlayerButton( "uncode", KeyStroke.getKeyStroke( KeyEvent.VK_U, 0 ) );
+			buttonUncode = newPlayerButton( "uncode", KeyStroke.getKeyStroke( KeyEvent.VK_N, 0 ) );
 		}
 		return buttonUncode;
+	}
+
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	/**
+	 * Returns the Player's UncodeAndReplay Button
+	 * @return a JButton used to undo last code, and rewind playback position.
+	 */
+	public JButton getButtonUncodeAndReplay(){
+		if( buttonUncodeAndReplay == null ){
+			buttonUncodeAndReplay = newPlayerButton( "uncodeAndReplay", KeyStroke.getKeyStroke( KeyEvent.VK_U, 0 ) );
+
+			// Button needs more space for label.
+			buttonUncodeAndReplay.setPreferredSize( new Dimension( (int) (BUTTON_WIDTH * 1.5), BUTTON_HEIGHT ) );
+		}
+		return buttonUncodeAndReplay;
 	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -370,9 +352,8 @@ public class PlayerView extends JFrame {
 			panelPlayerControls.setLayout(new FlowLayout());
 			panelPlayerControls.add(getButtonPlay());
 			panelPlayerControls.add(getButtonReplay());
-			panelPlayerControls.add(getButtonUnparse());
-			panelPlayerControls.add(getButtonUnparseAndReplay());
 			panelPlayerControls.add(getButtonUncode());
+			panelPlayerControls.add(getButtonUncodeAndReplay());
 			panelPlayerControls.add(getButtonRewind5s());
 		}
 		return panelPlayerControls;
@@ -427,7 +408,6 @@ public class PlayerView extends JFrame {
 		if( menuBarPlayer == null ){
 			menuBarPlayer = new JMenuBar();
 			menuBarPlayer.add(getMenuFile());
-			menuBarPlayer.add(getMenuParse());
 			menuBarPlayer.add(getMenuCode());
 			menuBarPlayer.add(getMenuGlobals());
 			menuBarPlayer.add(getMenuAbout());
@@ -468,30 +448,6 @@ public class PlayerView extends JFrame {
 	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	private JMenu getMenuParse(){
-		if( menuParse == null ){
-			menuParse = new JMenu(" Parse Utterances ");
-			menuParse.add(getMenuItemNewParse());
-			menuParse.add(getMenuItemLoadParse());
-		}
-		return menuParse;
-	}
-	
-	public JMenuItem getMenuItemNewParse(){
-		if( menuItemNewParse == null ){
-			menuItemNewParse = new JMenuItem("Start a New Parse File");
-		}
-		return menuItemNewParse;
-	}
-
-	public JMenuItem getMenuItemLoadParse(){
-		if( menuItemLoadParse == null ){
-			menuItemLoadParse = new JMenuItem("Resume Parsing a Parse File");
-		}
-		return menuItemLoadParse;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	private JMenu getMenuGlobals(){
 		if( menuGlobals == null ){
 			menuGlobals = new JMenu(" Global Ratings ");
@@ -519,14 +475,14 @@ public class PlayerView extends JFrame {
 	
 	public JMenuItem getMenuItemNewCode(){
 		if( menuItemNewCode == null ){
-			menuItemNewCode = new JMenuItem("Start Coding a Parse File");
+			menuItemNewCode = new JMenuItem("Start Coding a File");
 		}
 		return menuItemNewCode;
 	}
 
 	public JMenuItem getMenuItemLoadCode(){
 		if( menuItemLoadCode == null ){
-			menuItemLoadCode = new JMenuItem("Resume Coding a Casaa File");
+			menuItemLoadCode = new JMenuItem("Resume Coding a File");
 		}
 		return menuItemLoadCode;
 	}

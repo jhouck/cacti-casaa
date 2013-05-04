@@ -34,7 +34,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -51,6 +50,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 
+import edu.unm.casaa.main.ActionTable;
 import edu.unm.casaa.main.MainController;
 import edu.unm.casaa.main.Style;
 
@@ -84,6 +84,8 @@ public class MiscTemplateView extends JPanel {
 	private static final int BUTTON_HOR_GAP	= 5;
 	private static final int BUTTON_VER_GAP	= 4;
 
+	private JButton	buttonStart				= null;
+
 	private Dimension dimButtonSize			= null;
 	private static final int BUTTON_WIDTH	= 90;
 	private static final int BUTTON_HEIGHT	= 24;
@@ -111,7 +113,7 @@ public class MiscTemplateView extends JPanel {
 	private static final int PREV_COLS		= 60;
 	private TitledBorder borderPrev			= null;
 
-	private JCheckBox checkBoxPauseUncoded	= null;
+	private ActionTable		actionTable		= null; // Communication between GUI and MainController.
 
 	// Coding controls.
 	private HashMap< Integer, JButton > buttonMiscCode	= new HashMap< Integer, JButton >();
@@ -120,7 +122,9 @@ public class MiscTemplateView extends JPanel {
 	// Constructor and Initialization Methods
 	//====================================================================
 
-	public MiscTemplateView(){
+	public MiscTemplateView( ActionTable actionTable ){
+		assert (actionTable != null);
+		this.actionTable = actionTable;
 		init();
 	}
 
@@ -154,6 +158,15 @@ public class MiscTemplateView extends JPanel {
 	// Private Methods
 	//====================================================================
 
+	private JButton getButtonStart() {
+		if( buttonStart == null ) {
+			buttonStart = new JButton( actionTable.get( "parseStart" ) );
+			buttonStart.getActionMap().put( "pressed", buttonStart.getAction() );
+			buttonStart.setPreferredSize( getDimButtonSize() );
+			buttonStart.setToolTipText( "Start Coding" );
+		}
+		return buttonStart;
+	}
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // MISC Code Buttons
     private JButton getButtonMiscCode( MiscCode miscCode ) {
@@ -173,19 +186,6 @@ public class MiscTemplateView extends JPanel {
             buttonMiscCode.put( miscCode.value, button );
         }
         return button;
-    }
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    private JCheckBox getCheckBoxPauseUncoded(){
-        if( checkBoxPauseUncoded == null ){
-            checkBoxPauseUncoded = new JCheckBox("Pause if Uncoded", true);
-            checkBoxPauseUncoded.addMouseListener( new MouseAdapter() {
-                public void mouseClicked( MouseEvent e ) {
-                    MainController.instance.setPauseOnUncoded( checkBoxPauseUncoded.isSelected() );
-                }
-            } );
-        }
-        return checkBoxPauseUncoded;
     }
 
     // Parse user controls from XML file.
@@ -404,13 +404,14 @@ public class MiscTemplateView extends JPanel {
 			panelButtons.setBorder(getBorderButtons());
 			panelButtons.setLayout(new BoxLayout(panelButtons, BoxLayout.Y_AXIS));
 
+			panelButtons.add(getButtonStart());
+
 			JPanel panelInner = new JPanel();
 
 			panelInner.setLayout(new BoxLayout(panelInner, BoxLayout.X_AXIS));
 			panelInner.add(getPanelLeftControls());
             panelInner.add(getPanelRightControls());
 			panelButtons.add(panelInner);
-            panelButtons.add(getCheckBoxPauseUncoded());
 		}
 		return panelButtons;
 	}

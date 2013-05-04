@@ -34,6 +34,9 @@ public interface Utterance {
 	
 	// Strip end data, so isParsed() will return false.  Preserves start data.
 	public void	stripEndData();
+	
+	// Strip code, so isCoded() will return false.  Writes MiscCode.INVALID_CODE.
+	public void stripMiscCode();
 
 	// Enum and start time will be initialized by derived class constructor.
 	public void	setEnum(int index);

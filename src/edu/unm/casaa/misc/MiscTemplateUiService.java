@@ -20,18 +20,15 @@ package edu.unm.casaa.misc;
 
 import javax.swing.JPanel;
 
+import edu.unm.casaa.main.ActionTable;
 import edu.unm.casaa.main.TemplateUiService;
 
 public class MiscTemplateUiService extends TemplateUiService {
 	
 	private MiscTemplateView view 	= null;
 
-	public MiscTemplateUiService() {
-		init();
-	}
-
-	private void init() {
-		view = new MiscTemplateView();
+	public MiscTemplateUiService( ActionTable actionTable ) {
+		view = new MiscTemplateView( actionTable );
 	}
 	
 	public JPanel getTemplateView() {
