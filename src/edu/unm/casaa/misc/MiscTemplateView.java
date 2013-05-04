@@ -72,13 +72,12 @@ public class MiscTemplateView extends JPanel {
 	private static final int PANEL_HEIGHT	= 450;
 
 	//GUI Components and Constants
-	private TitledBorder borderWindow		= null;
 	private Dimension dimMainPanel			= null;
 
-	private JPanel panelButtons				= null;
+	private JPanel panelHeader				= null;
 	private JPanel panelPrevText			= null;
 	private JPanel panelCurrentText			= null;
-	private JPanel panelNextText			= null;
+	private JPanel panelControls			= null;
 	private JPanel panelLeftControls	    = null;
 	private JPanel panelRightControls		= null;
 	private static final int BUTTON_HOR_GAP	= 5;
@@ -89,9 +88,9 @@ public class MiscTemplateView extends JPanel {
 	private Dimension dimButtonSize			= null;
 	private static final int BUTTON_WIDTH	= 90;
 	private static final int BUTTON_HEIGHT	= 24;
-	private TitledBorder borderButtons		= null;
 
 	//User Feedback Components
+	private JLabel labelFile				= null;
 	private JTextField textFieldOrder		= null;
 	private static final int ORDER_COLS		= 9;
 	private JLabel labelOrder				= null;
@@ -104,10 +103,6 @@ public class MiscTemplateView extends JPanel {
 	private JLabel labelStart				= null;
 	private JLabel labelEnd					= null;
 	private TitledBorder borderCurrent		= null;
-
-	private JTextField textFieldNext		= null;
-	private static final int NEXT_COLS		= 60;
-	private TitledBorder borderNext			= null;
 
 	private JTextField textFieldPrev		= null;
 	private static final int PREV_COLS		= 60;
@@ -130,15 +125,14 @@ public class MiscTemplateView extends JPanel {
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	private void init(){
-        setBorder( getBorderWindow() );
         setMaximumSize( getDimMainPanel() );
         setMinimumSize( getDimMainPanel() );
         setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );
         parseUserControls();
+        add( getPanelHeader() );
         add( getPanelPrevText() );
         add( getPanelCurrentText() );
-        add( getPanelNextText() );
-        add( getPanelButtons() );
+        add( getPanelControls() );
 
         // Prevent control panels from expanding, as that breaks alignment.
         getPanelLeftControls().setMaximumSize( getPanelLeftControls().getMinimumSize() );
@@ -153,6 +147,13 @@ public class MiscTemplateView extends JPanel {
 	public String toString(){
 		return ("MISC");
 	}
+	
+	public JLabel getLabelFile() {
+		if( labelFile == null ) {
+			labelFile = new JLabel();
+		}
+		return labelFile;
+	}
 
 	//====================================================================
 	// Private Methods
@@ -160,14 +161,29 @@ public class MiscTemplateView extends JPanel {
 
 	private JButton getButtonStart() {
 		if( buttonStart == null ) {
-			buttonStart = new JButton( actionTable.get( "parseStart" ) );
+			buttonStart = new JButton( actionTable.get( "codeStart" ) );
 			buttonStart.getActionMap().put( "pressed", buttonStart.getAction() );
-			buttonStart.setPreferredSize( getDimButtonSize() );
+			buttonStart.setPreferredSize( new Dimension(140, BUTTON_HEIGHT) ); // Larger button to fit label.
 			buttonStart.setToolTipText( "Start Coding" );
 		}
 		return buttonStart;
 	}
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	private JPanel getPanelHeader(){
+		if( panelHeader == null ){
+			panelHeader = new JPanel();
+			panelHeader.setLayout( new BorderLayout() );
+
+			JPanel inner = new JPanel();
+
+			inner.add( getButtonStart() );
+			inner.add( getLabelFile() );
+			panelHeader.add( inner, BorderLayout.LINE_START );
+		}
+		return panelHeader;
+	}
+
+	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // MISC Code Buttons
     private JButton getButtonMiscCode( MiscCode miscCode ) {
         JButton button = buttonMiscCode.get( miscCode.value );
@@ -388,40 +404,19 @@ public class MiscTemplateView extends JPanel {
 	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	private TitledBorder getBorderWindow(){
-		if( borderWindow == null ){
-			borderWindow = BorderFactory.createTitledBorder("Coding Template");
-			borderWindow.setTitleJustification(TitledBorder.CENTER);
-			borderWindow.setTitleColor(Color.BLACK);
-		}
-		return borderWindow;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	private JPanel getPanelButtons(){
-		if( panelButtons == null ){
-			panelButtons = new JPanel();
-			panelButtons.setBorder(getBorderButtons());
-			panelButtons.setLayout(new BoxLayout(panelButtons, BoxLayout.Y_AXIS));
-
-			panelButtons.add(getButtonStart());
+	private JPanel getPanelControls(){
+		if( panelControls == null ){
+			panelControls = new JPanel();
+			panelControls.setLayout(new BoxLayout(panelControls, BoxLayout.Y_AXIS));
 
 			JPanel panelInner = new JPanel();
 
 			panelInner.setLayout(new BoxLayout(panelInner, BoxLayout.X_AXIS));
 			panelInner.add(getPanelLeftControls());
             panelInner.add(getPanelRightControls());
-			panelButtons.add(panelInner);
+            panelControls.add(panelInner);
 		}
-		return panelButtons;
-	}
-
-	private TitledBorder getBorderButtons(){
-		if( borderButtons == null ){
-			borderButtons = BorderFactory.createTitledBorder("MISC Coding Controls");
-			borderButtons.setTitleJustification(TitledBorder.LEADING);
-		}
-		return borderButtons;
+		return panelControls;
 	}
 
 	private Dimension getDimButtonSize(){
@@ -521,20 +516,6 @@ public class MiscTemplateView extends JPanel {
 			labelEnd.setLabelFor(getTextFieldEndTime());
 		}
 		return labelEnd;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	private JTextField getTextFieldNext(){
-		if( textFieldNext == null ){
-			textFieldNext = new JTextField(NEXT_COLS);
-			textFieldNext.setEditable(false);
-			Style.configureLightText( textFieldNext );
-		}
-		return textFieldNext;
-	}
-
-	public void setTextFieldNext(String utteranceString){
-		getTextFieldNext().setText(utteranceString);
 	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -642,25 +623,6 @@ public class MiscTemplateView extends JPanel {
 			borderPrev.setTitleJustification(TitledBorder.LEADING);
 		}
 		return borderPrev;
-	}
-
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	private JPanel getPanelNextText(){
-		if( panelNextText == null ){
-			panelNextText = new JPanel();
-			panelNextText.setBorder(getBorderNext());
-			panelNextText.setLayout(new BorderLayout());
-			panelNextText.add(getTextFieldNext(), BorderLayout.CENTER);
-		}
-		return panelNextText;
-	}
-
-	private TitledBorder getBorderNext(){
-		if( borderNext == null ){
-			borderNext = BorderFactory.createTitledBorder("Next Utterance");
-			borderNext.setTitleJustification(TitledBorder.LEADING);
-		}
-		return borderNext;
 	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

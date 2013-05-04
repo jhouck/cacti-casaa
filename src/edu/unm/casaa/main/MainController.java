@@ -115,12 +115,6 @@ public class MainController implements BasicPlayerListener {
 
     private UtteranceList        utteranceList            = null;
 
-    // TODO - Can we cut currentUtterance?  I believe we only ever operate on
-    // last element in utterance list, so we should be able to implicitly
-    // define it as current.
-    private int                  currentUtterance         = 0;                // Index of utterance selected for parse or code. May be equal to list size, in
-                                                                               // which case current utterance is null.
-
     private int                  numSaves                 = 0;                // Number of times we've saved since loading current session data.
     private int                  numUninterruptedUncodes  = 0;                // Number of times user has uncoded without doing anything else.
 
@@ -220,8 +214,8 @@ public class MainController implements BasicPlayerListener {
 
 	// Callbacks for GUI actions.
     public void handleAction( String action ) {
-        if( "parseStart".equals( action ) ) {
-            parseStart();
+        if( "codeStart".equals( action ) ) {
+            codeStart();
         } else if( "play".equals( action ) ) {
             handleActionPlay();
         } else if( "replay".equals( action ) ) {
@@ -244,7 +238,7 @@ public class MainController implements BasicPlayerListener {
 	public ActionTable getActionTable() {
         if( actionTable == null ) {
             actionTable = new ActionTable();
-            mapAction( "Start", "parseStart" );
+            mapAction( "Start Coding", "codeStart" );
             mapAction( "Play/Pause", "play" );
             mapAction( "Replay", "replay" );
             mapAction( "Uncode", "uncode" );
@@ -277,13 +271,9 @@ public class MainController implements BasicPlayerListener {
 		return player.getEncodedLength();
 	}
 
-	// Get current utterance. May be null.
+	// Get current utterance, which is always the last utterance in list.  May be null.
     public synchronized Utterance getCurrentUtterance() {
-        assert (currentUtterance >= 0);
-        if( currentUtterance < getUtteranceList().size() )
-            return getUtteranceList().get( currentUtterance );
-        else
-            return null;
+    	return getUtteranceList().last();
 	}
 
 	// Handle errors re: user codes XML file. We must be able to find and parse
@@ -444,27 +434,11 @@ public class MainController implements BasicPlayerListener {
         globalsLabel = map.getNamedItem( "label" ).getTextContent();
     }
 
-    // Get final utterance in list, or null if list is empty.
-	private synchronized Utterance getLastUtterance() {
-		return getUtteranceList().last();
-	}
-
-	// Get next utterance, or null if no next utterance exists.
-	private synchronized Utterance getNextUtterance() {
-		if (currentUtterance + 1 < getUtteranceList().size()) {
-			return getUtteranceList().get(currentUtterance + 1);
-		} else {
-			return null;
-		}
-	}
-
 	// Get previous utterance, or null if no previous utterance exists.
 	private synchronized Utterance getPreviousUtterance() {
-		if (currentUtterance > 0) {
-			return getUtteranceList().get(currentUtterance - 1);
-		} else {
-			return null;
-		}
+		int count = getUtteranceList().size();
+
+		return (count > 1) ? getUtteranceList().get( count - 2 ) : null;
 	}
 
 	// Seek player as close as possible to requested bytes. Updates slider and
@@ -540,13 +514,12 @@ public class MainController implements BasicPlayerListener {
 	}
 
 	private void cleanupMode() {
-        utteranceList       = null;
-        currentUtterance    = 0;
+        utteranceList = null;
         resetUncodeCount();
 	}
 
 	// Switch modes. Hides/shows relevant UI.
-	// PRE: filenameAudio is set.
+	// PRE: filenameAudio and filenameMisc are set.
     private void setMode( Mode mode ) {
         setTemplateView( mode );
 
@@ -572,18 +545,6 @@ public class MainController implements BasicPlayerListener {
 	private synchronized void applyPlayerProgress() {
 		updateTimeDisplay();
 		updateSeekSliderDisplay();
-
-		// Handle MISC utterance and player state.
-		if (templateView instanceof MiscTemplateView) {
-			Utterance	current = getCurrentUtterance();
-			int			bytes 	= player.getEncodedStreamPosition();
-
-			// Move to next utterance, if current is coded.
-			// TODO - Can this actually happen?  I think we won't ever create a list
-			// of utterances that are not all coded, excluding the final utterance.
-			if ((current != null) && (bytes > current.getEndBytes()) && current.isCoded())
-				currentUtterance++;
-		}
 		updateUtteranceDisplays();
 		progressReported = false; // Clear flag once (current) progress report is applied.
 	}
@@ -727,8 +688,8 @@ public class MainController implements BasicPlayerListener {
             int         pos         = 0;
 
             if( utterance != null ) {
-                pos = utterance.getStartBytes();
-                pos -= bytesPerSecond; // Skip back one extra second.
+            	// Position one second before start of utterance.
+                pos = utterance.getStartBytes() - bytesPerSecond;
                 pos = Math.max( pos, 0 ); // Clamp.
             }
             playerSeek( pos );
@@ -761,11 +722,9 @@ public class MainController implements BasicPlayerListener {
 		// Rewind playback position 5 seconds, without affecting utterances.
 		assert (bytesPerSecond > 0);
 
-		int pos = streamPosition();
+		int pos = streamPosition() - (5 * bytesPerSecond);
 
-		pos -= 5 * bytesPerSecond;
         pos = Math.max( pos, 0 ); // Clamp to beginning of file.
-
         playerSeek( pos );
         updateUtteranceDisplays();
         updateTimeDisplay();
@@ -860,6 +819,7 @@ public class MainController implements BasicPlayerListener {
         // Check if code filename refers to an existing file.  If so, warn and get user confirmation.
         String  newFilename = chooser.getSelectedFile().getAbsolutePath();
 
+        newFilename = includeSuffix( newFilename, "casaa" );
         if( new File( newFilename ).exists() && !confirmOverwrite( newFilename ) )
                 return; // User canceled.
 
@@ -886,6 +846,7 @@ public class MainController implements BasicPlayerListener {
         // Check if code filename refers to an existing file.  If so, warn and get user confirmation.
         String  newFilename = chooser.getSelectedFile().getAbsolutePath();
 
+        newFilename = includeSuffix( newFilename, "globals" );
         if( new File( newFilename ).exists() && !confirmOverwrite( newFilename ) )
             return; // User canceled.
 
@@ -915,6 +876,17 @@ public class MainController implements BasicPlayerListener {
             postLoad();
         }
 	}
+
+	// If filename does not yet end with suffix, append suffix.
+	private String includeSuffix( String filename, String suffix ) {
+		String suffixWithDot = "." + suffix;
+
+		if( filename.endsWith( suffixWithDot ) ) {
+            return filename;
+        } else {
+            return filename.concat( suffixWithDot );
+        }
+    }
 
 	// Save current session. Periodically also save backup copy.
     private synchronized void saveSession() {
@@ -1011,7 +983,7 @@ public class MainController implements BasicPlayerListener {
 			int bytes = player.getEncodedStreamPosition();
 			int seconds = bytes / bytesPerSecond;
 
-			playerView.setLabelTime("Time:  " + TimeCode.toString(seconds));
+			playerView.setLabelTime("Time  " + TimeCode.toString(seconds));
 		} else {
 			// EXTEND: Get time based on frames rather than bytes.
 			// Need a way to determine current position based on frames.
@@ -1033,7 +1005,11 @@ public class MainController implements BasicPlayerListener {
         case CODE:
             templateUI      = new MiscTemplateUiService( getActionTable() );
             templateView    = templateUI.getTemplateView();
-            break;
+
+			MiscTemplateView view    = (MiscTemplateView) templateView;
+
+			view.getLabelFile().setText( filenameMisc );
+			break;
         case GLOBALS:
             templateUI      = new GlobalTemplateUiService();
             templateView    = templateUI.getTemplateView();
@@ -1063,16 +1039,16 @@ public class MainController implements BasicPlayerListener {
 	}
 
 	// Mark start of first utterance.
-	public synchronized void parseStart() {
+	public synchronized void codeStart() {
 	    // Cache stream position, as it may change over repeated queries (because it advances
 	    // with player thread).
 	    int    position    = streamPosition();
 
+	    if( player.getStatus() != BasicPlayer.PLAYING )
+	    	handleActionPlay(); // Start/resume playback.
+
 	    if( getUtteranceList().size() > 0 )
 	    	return; // Parsing starts only once.
-
-	    if( player.getStatus() != BasicPlayer.PLAYING )
-	    	handleActionPlay();
 
 	    // Record start data.
         assert (bytesPerSecond > 0);
@@ -1082,7 +1058,6 @@ public class MainController implements BasicPlayerListener {
         Utterance   data    = new MiscDataItem( 0, startString, position );
 
         getUtteranceList().add( data );
-        currentUtterance = 0; // Select this as current utterance.
 
         resetUncodeCount();
         updateUtteranceDisplays();
@@ -1105,11 +1080,11 @@ public class MainController implements BasicPlayerListener {
 
         if( position <= utterance.getStartBytes() )
             return; // Ignore when playback is outside utterance.
-
-        // TODO - Ignore code if utterance is already coded?
-        //  - At the very least, we should not start a new utterance unless we just ended final existing utterance.
+        if( utterance.isCoded() )
+        	return; // Ignore if already coded.
 
         utterance.setMiscCode( miscCode );
+        resetUncodeCount();
 
         // End utterance.
         assert (bytesPerSecond > 0);
@@ -1117,18 +1092,14 @@ public class MainController implements BasicPlayerListener {
 
         utterance.setEndTime( positionString );
         utterance.setEndBytes( position );
-        saveSession();
 
         // Start new utterance.
-        // NOTE: We save session before starting new utterance, so only coded
-        // utterances are saved.  It could work either way, though.
         int         order   = getUtteranceList().size();
         Utterance   data    = new MiscDataItem( order, positionString, position );
 
         getUtteranceList().add( data );
-        currentUtterance = order; // Select new utterance.
-
         updateUtteranceDisplays();
+        saveSession();
     }
 
     // Undo the actions of pressing a MISC code button.
@@ -1143,20 +1114,10 @@ public class MainController implements BasicPlayerListener {
 
     	// Strip code and end data from last remaining utterance.
     	u = list.last();
-    	if( u == null )
-    	{
-    		// TMP - Handled by uncodeAndReplay.
-            // playerSeek( 0 );
-        	currentUtterance = 0;
-    	}
-    	else
+    	if( u != null )
     	{
     		u.stripEndData();
     		u.stripMiscCode();
-
-    		// TMP - Handled by uncodeAndReplay.
-            // playerSeek( u.getStartBytes() );
-        	currentUtterance = u.getEnum();
     	}
     	updateUtteranceDisplays();
     }
@@ -1170,13 +1131,7 @@ public class MainController implements BasicPlayerListener {
         if( templateView instanceof MiscTemplateView ) {
 			MiscTemplateView view    = (MiscTemplateView) templateView;
 			Utterance        current = getCurrentUtterance();
-			Utterance        next    = getNextUtterance();
 			Utterance        prev    = getPreviousUtterance();
-
-            if( next == null )
-                view.setTextFieldNext( "" );
-            else
-                view.setTextFieldNext( next.toString() );
 
             if( prev == null )
                 view.setTextFieldPrev( "" );
@@ -1211,24 +1166,31 @@ public class MainController implements BasicPlayerListener {
 	// data from file.
 	// PRE: Mode is set, so appropriate templateView is active.
 	private synchronized void postLoad() {
-		currentUtterance = 0; // Default to first utterance.
         if( templateView instanceof MiscTemplateView ) {
-			// Seek to first uncoded utterance. May be one past last utterance in list.
-			currentUtterance = getUtteranceList().getLastCodedUtterance();
-			currentUtterance++;
+        	Utterance utterance = getCurrentUtterance();
 
-            if( getCurrentUtterance() == null ) {
-                if( getUtteranceList().isEmpty() )
-                    playerSeek( 0 );
-                else
-                    playerSeek( getLastUtterance().getEndBytes() );
+        	if( utterance == null ) {
+        		playerSeek( 0 );
             } else {
-                // Special case - if we haven't coded any utterances yet, always seek to zero.
-                // Else seek to start of first uncoded utterance.
-                if( currentUtterance == 0 )
-                    playerSeek( 0 );
-                else
-                    playerSeek( getCurrentUtterance().getStartBytes() );
+            	// We expect utterances in file to be coded.  For backwards compatibility,
+            	// tolerate uncoded utterances in file.
+            	if( utterance.isCoded() ) {
+                    // Start new utterance.
+            		int 		position		= utterance.getEndBytes();
+                    String 		positionString 	= TimeCode.toString( position / bytesPerSecond );
+                    int         order 		  	= getUtteranceList().size();
+                    Utterance   data		 	= new MiscDataItem( order, positionString, position );
+
+                    getUtteranceList().add( data );
+                    playerSeek( position );
+            	}
+            	else {
+            		// Tolerate uncoded final utterance.  Strip end data, so it is consistent
+            		// with how we treat current utterance.  NOTE: This does not check for
+            		// uncoded utterances anywhere else in file.
+            		utterance.stripEndData();
+                    playerSeek( utterance.getStartBytes() );
+            	}
             }
         } else if( templateView == null ) {
 			showTemplateNotFoundDialog();
@@ -1275,23 +1237,23 @@ public class MainController implements BasicPlayerListener {
 
 			switch (event.getCode()) {
 			case 0:
-				playerStatus = "OPENING";
+				playerStatus = "Opening";
 				break;
 			case 1:
-				playerStatus = "OPENED";
+				playerStatus = "Opened";
 				break;
 			case 2:
-				playerStatus = "PLAYING";
+				playerStatus = "Playing";
 				break;
 			case 3:
-				playerStatus = "STOPPED";
+				playerStatus = "Stopped";
 				break;
 			case 4:
-				playerStatus = "PAUSED";
+				playerStatus = "Paused";
 				break;
 			case 5:
 				// RESUMED
-				playerStatus = "PLAYING";
+				playerStatus = "Playing";
 				break;
 			case 6:
 				// SEEKING
@@ -1300,7 +1262,7 @@ public class MainController implements BasicPlayerListener {
 				// SEEKED
 				break;
 			case 8:
-				// End of media.  TODO - Anything?  Pause?
+				// End of media.
 				break;
 			case 9:
 				// PAN
@@ -1320,9 +1282,9 @@ public class MainController implements BasicPlayerListener {
 					statusChangeEventIndex = event.getIndex();
 
 					File file = new File(filenameAudio);
-					String str = playerStatus.concat(":  " + file.getName()
-							+ "  |  Total Time = "
-							+ TimeCode.toString(player.getSecondsPerFile()));
+					String str = playerStatus + "  " + file.getName()
+							+ "  |  Total Time "
+							+ TimeCode.toString(player.getSecondsPerFile());
 
 					playerView.setLabelPlayerStatus(str);
 				}

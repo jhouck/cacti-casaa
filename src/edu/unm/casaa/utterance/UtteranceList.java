@@ -57,18 +57,6 @@ public class UtteranceList {
 	}
 
 	/**
-	 * Remove utterance at given index, updating "enum" field of all later utterances.
-	 */
-	public void removeAt(int index){
-		if( index < list.size() ){
-			list.remove(index);
-			for( int i = index; i < list.size(); i++ ){
-				list.get(i).setEnum(i);
-			}
-		}
-	}
-
-	/**
 	 * Return utterance at given index, or null is index is out of bounds.
 	 * @param index
 	 * @return the utterance at given index, or null if index is out of bounds
@@ -87,20 +75,6 @@ public class UtteranceList {
 	 */
 	public Utterance last() {
 		return list.isEmpty() ? null : list.lastElement();
-	}
-
-	/**
-	 * Return index of last coded utterance, or -1 if none found.
-	 * @return index
-	 */
-	public int getLastCodedUtterance(){
-		// Search backwards from end of list until we find a coded element, if any.
-		for( int i = list.size() - 1; i >= 0; i-- ){
-			if(list.get(i).isCoded()){
-				return i;
-			}
-		}
-		return -1; // No coded utterance found.
 	}
 
 	public int size(){
