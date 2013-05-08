@@ -61,14 +61,7 @@ import edu.unm.casaa.utterance.UtteranceList;
 /*
  * IMPROVE:
  * Interface:
- *  - We should label the current mode (parse, code, globals).  This is implicitly illustrated
- *    by the set of UI elements displayed (parse buttons, code buttons, etc).  But it would be
- *    more user-friendly to explicitly label the mode we're in.
- *  - We should label the file (e.g. foo.parse, foo.casaa) we're editing.
- *    - Audio file (all modes).
- *    - Parse file (parse and code modes).
- *    - Code file (code mode only).
- *    - Globals file (globals mode only). 
+ *  - Add filename label to Globals mode.
  */
 
 /*

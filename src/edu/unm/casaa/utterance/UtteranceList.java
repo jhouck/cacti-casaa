@@ -154,7 +154,7 @@ public class UtteranceList {
 			int 			lineSize 	= st.countTokens();  //5 = parsed only, 7 = coded
 			int 			order 		= Integer.parseInt(st.nextToken());
 
-			// TODO: Place a check for "null" in start and end fields to report to the user.
+			// IMPROVE: Place a check for "null" in start and end fields to report to the user.
 			String 			start 		= st.nextToken();
 			String 			end 		= st.nextToken();
 			int 			stBytes 	= Integer.parseInt(st.nextToken());
