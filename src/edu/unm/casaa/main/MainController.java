@@ -542,15 +542,27 @@ public class MainController implements BasicPlayerListener {
 		progressReported = false; // Clear flag once (current) progress report is applied.
 	}
 
+	// Open file chooser to select audio file. On approve, return absolute path to file.
+	// Else return empty string.
+	private String selectAudioFile() {
+		JFileChooser chooser = new JFileChooser();
+
+        chooser.setDialogTitle( "Select Audio File" );
+        chooser.setFileFilter( new FileNameExtensionFilter( "WAV Audio", "wav" ) );
+        if( chooser.showOpenDialog( playerView ) == JFileChooser.APPROVE_OPTION ) {
+            return chooser.getSelectedFile().getAbsolutePath();
+        } else {
+            return "";
+        }
+	}
+
 	// Open file chooser to select audio file. On approve, load audio file.
 	// Returns true if audio file was successfully opened.
 	private boolean selectAndLoadAudioFile() {
-		JFileChooser chooser = new JFileChooser();
+		String filename = selectAudioFile();
 
-        chooser.setDialogTitle( "Load Audio File" );
-        chooser.setFileFilter( new FileNameExtensionFilter( "WAV Audio only for coding", "wav" ) );
-        if( chooser.showOpenDialog( playerView ) == JFileChooser.APPROVE_OPTION ) {
-            return loadAudioFile( chooser.getSelectedFile().getAbsolutePath() );
+        if( filename.length() > 0 ) {
+            return loadAudioFile( filename );
         } else {
             return false;
         }
@@ -559,11 +571,10 @@ public class MainController implements BasicPlayerListener {
 	// Load audio file from given filename. Records filenameAudio.
 	// Returns true on success.
 	private boolean loadAudioFile(String filename) {
-		filenameAudio = filename;
-		bytesPerSecond = 0;
 		try {
-			player.open(new File(filenameAudio));
-			bytesPerSecond = player.getBytesPerSecond();
+			player.open(new File(filename));
+			filenameAudio 	= filename;
+			bytesPerSecond 	= player.getBytesPerSecond();
 			updateTimeDisplay();
 			updateSeekSliderDisplay();
 			return true;
@@ -802,21 +813,30 @@ public class MainController implements BasicPlayerListener {
         if( player.getStatus() == BasicPlayer.PLAYING )
             playerPause();
 
+        // Select audio file.
+        String nameAudio = selectAudioFile();
+
+        if( nameAudio.length() == 0 )
+        	return;
+
+        // Default casaa filename to match audio file, with .casaa suffix.
+        String newFilename = changeSuffix( nameAudio, "wav", "casaa" );
+
         JFileChooser chooser = new JFileChooser();
 
         chooser.setDialogTitle( "Name New CASAA File" );
         chooser.setFileFilter( new FileNameExtensionFilter( "CASAA files", "casaa" ) );
+        chooser.setSelectedFile( new File( newFilename ) );
         if( chooser.showSaveDialog( playerView ) != JFileChooser.APPROVE_OPTION )
             return; // User canceled.
 
         // Check if code filename refers to an existing file.  If so, warn and get user confirmation.
-        String  newFilename = chooser.getSelectedFile().getAbsolutePath();
-
+        newFilename = chooser.getSelectedFile().getAbsolutePath();
         newFilename = includeSuffix( newFilename, "casaa" );
         if( new File( newFilename ).exists() && !confirmOverwrite( newFilename ) )
-                return; // User canceled.
+        	return; // User canceled.
 
-        if( selectAndLoadAudioFile() ) {
+        if( loadAudioFile( nameAudio ) ) {
             cleanupMode();
             filenameMisc = newFilename;
             utteranceListChanged();
@@ -871,6 +891,7 @@ public class MainController implements BasicPlayerListener {
 	}
 
 	// If filename does not yet end with suffix, append suffix.
+	// Suffix should be specified without leading period.
 	private String includeSuffix( String filename, String suffix ) {
 		String suffixWithDot = "." + suffix;
 
@@ -880,6 +901,18 @@ public class MainController implements BasicPlayerListener {
             return filename.concat( suffixWithDot );
         }
     }
+
+	// Return copy of filename with oldSuffix (if present) removed, and newSuffix added.
+	// Suffixes should be specified without leading period.
+	private String changeSuffix( String filename, String oldSuffix, String newSuffix ) {
+		String	result 	= filename;
+		int		index 	= filename.lastIndexOf( '.' );
+
+		if( index > 0 ) {
+			result = result.substring( 0, index );
+		}
+		return result + "." + newSuffix;
+	}
 
 	// Save current session. Periodically also save backup copy.
     private synchronized void saveSession() {
